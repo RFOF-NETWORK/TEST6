@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@RFOF-NETWORK - EuroChain / IICB</title>
+    <style>
+        body { font-family: sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; margin: 0; }
+        .box { background: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        input { display: block; width: 100%; margin: 10px 0; padding: 12px; border-radius: 4px; border: 1px solid #475569; background: #334155; color: white; box-sizing: border-box; }
+        
+        .copy-row { display: flex; justify-content: space-between; align-items: center; background: #020617; padding: 6px 10px; border-radius: 4px; margin: 5px 0; gap: 10px; border: 1px solid #334155; }
+        
+        /* Die Hashes als reine, klickbare Text-Hyperlinks */
+        .clickable-hash { word-break: break-all; font-family: monospace; font-size: 11px; color: #38bdf8; flex: 1; cursor: pointer; text-decoration: underline; }
+        .clickable-hash:hover { color: #60a5fa; }
+        
+        .copy-btn { background: #475569; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 14px; min-width: 40px; justify-content: center; display: flex; }
+        .copy-btn:active { background: #10b981; }
+
+        button.action-btn { background: #2563eb; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 5px; }
+        .hidden { display: none; }
+        
+        .chain-log { font-family: monospace; background: #020617; padding: 12px; border-radius: 4px; color: #10b981; max-height: 350px; overflow-y: auto; font-size: 12px; line-height: 1.6; -webkit-overflow-scrolling: touch; }
+        hr { border: 0; border-top: 1px dashed #475569; margin: 15px 0; }
+        .section-title { color: #f97316; font-size: 13px; font-weight: bold; margin-top: 10px; margin-bottom: 2px; text-transform: uppercase; }
+
+        /* Der neue Global Explorer Bereich ganz unten */
+        .explorer-container { background: #030712; border: 2px solid #2563eb; border-radius: 12px; padding: 20px; margin-top: 30px; }
+        .explorer-title { color: #38bdf8; font-size: 16px; font-weight: bold; margin-top: 0; border-bottom: 2px solid #2563eb; padding-bottom: 8px; text-transform: uppercase; }
+        .explorer-inspect-box { background: #111827; padding: 15px; border-radius: 6px; border: 1px solid #2563eb; font-family: monospace; font-size: 11px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div style="max-width: 600px; margin: 0 auto; padding-top: 20px;">
+        <h1>🦅 Golden Phoenix Central Bank (IICB)</h1>
+        
+        <!-- SCHRITT 1: ANMELDUNG -->
+        <div id="auth-section" class="box">
+            <h2>System-Zugang (Inland-Status)</h2>
+            <input type="text" id="username" placeholder="Benutzername">
+            <input type="password" id="password" placeholder="Passwort">
+            <button class="action-btn" onclick="system.createAccount()">Account Registrieren / Einloggen</button>
+        </div>
+
+        <!-- SCHRITT 2: DASHBOARD (NACH LOGIN) -->
+        <div id="dashboard-section" class="box hidden">
+            <h2>Willkommen, <span id="user-display" style="color:#38bdf8;"></span></h2>
+            <p>System-Status: <span style="color:#10b981;">● Autonom & Validiert</span></p>
+            
+            <!-- FIAT PORTFOLIO -->
+            <div class="box" style="background:#334155;">
+                <h3>Fiat-Ebene (Account-Basiert)</h3>
+                <p>Guthaben: <strong>100.000,00 EUR</strong> (Verbriefte Liquidität)</p>
+            </div>
+
+            <!-- WALLET VERWALTUNG (ORIGINAL BESCHRIFTUNG 1) -->
+            <div id="wallet-setup" class="box" style="background:#334155;">
+                <h3>Krypto-Ebene (EVM & BTC Ready)</h3>
+                <button class="action-btn" onclick="system.generateFourChannels()" style="background:#10b981;">Neue autonome Wallet generieren</button>
+                <p style="text-align: center; margin: 10px 0;">oder</p>
+                <input type="text" id="import-addr" placeholder="0x... oder BTC Adresse">
+                <button class="action-btn" onclick="system.openTwoFactorField()" style="background:#475569;">Adresse manuell verknüpfen</button>
+            </div>
+
+            <!-- INTEGRIERTES 2FA POPUP FÜR PHRASEN-EINGABE -->
+            <div id="wallet-2fa" class="box hidden" style="background:#451a03; border: 1px solid #f97316;">
+                <h3 style="color:#f97316; margin-top:0;">🛡️ Kryptografischer 2FA-Identitätsnachweis</h3>
+                <p style="font-size:12px;">Gib die zugehörige Seed Phrase ein, um die Eigentümerschaft ohne Dritte zu verifizieren:</p>
+                <input type="password" id="import-seed" placeholder="Seed Phrase (Wörter durch Leerzeichen getrennt)">
+                <button class="action-btn" onclick="system.verifyAndImportWallet()" style="background:#f97316;">Phrasen verifizieren & einbinden</button>
+                <button class="action-btn" onclick="system.cancel2FA()" style="background:#7f1d1d; margin-top:5px; font-size:12px; padding:6px;">Abbrechen</button>
+            </div>
+
+            <!-- AKTIVE WALLET ANZEIGE (VIER KANÄLE AUS ZWEI PHRASEN) -->
+            <div id="wallet-active" class="box hidden" style="background:#020617; border: 1px solid #10b981;">
+                <h3>Aktive Wallet-Verbindung</h3>
+                
+                <div class="section-title">12-Wort Kanal-Ebene</div>
+                <p style="margin:2px 0; font-size:11px;">Öffentliche EVM Adresse (12w):</p>
+                <div class="copy-row">
+                    <span class="copy-text" id="evm12-display" style="color:#10b981; font-family:monospace; font-size:11px; word-break:break-all;"></span>
+                    <button class="copy-btn" onclick="system.copyToClipboard('evm12-display')">🗐</button>
+                </div>
+                <p style="margin:2px 0; font-size:11px;">Öffentliche BTC Adresse (12w):</p>
+                <div class="copy-row">
+                    <span class="copy-text" id="btc12-display" style="color:#10b981; font-family:monospace; font-size:11px; word-break:break-all;"></span>
+                    <button class="copy-btn" onclick="system.copyToClipboard('btc12-display')">🗐</button>
+                </div>
+                <p style="margin:2px 0; font-size:11px;">12-Wort Seed Phrase:</p>
+                <div class="copy-row">
+                    <span class="copy-text" id="seed12-display" style="color:#ef4444; font-family:monospace; font-size:11px; word-break:break-all;"></span>
+                    <button class="copy-btn" onclick="system.copyToClipboard('seed12-display')">🗐</button>
+                </div>
+
+                <hr style="margin:10px 0; border-top:1px dashed #334155;">
+
+                <div class="section-title">24-Wort Kanal-Ebene</div>
+                <p style="margin:2px 0; font-size:11px;">Öffentliche EVM Adresse (24w):</p>
+                <div class="copy-row">
+                    <span class="copy-text" id="evm24-display" style="color:#10b981; font-family:monospace; font-size:11px; word-break:break-all;"></span>
+                    <button class="copy-btn" onclick="system.copyToClipboard('evm24-display')">🗐</button>
+                </div>
+                <p style="margin:2px 0; font-size:11px;">Öffentliche BTC Adresse (24w):</p>
+                <div class="copy-row">
+                    <span class="copy-text" id="btc24-display" style="color:#10b981; font-family:monospace; font-size:11px; word-break:break-all;"></span>
+                    <button class="copy-btn" onclick="system.copyToClipboard('btc24-display')">🗐</button>
+                </div>
+                <p style="margin:2px 0; font-size:11px;">24-Wort Seed Phrase:</p>
+                <div class="copy-row">
+                    <span class="copy-text" id="seed24-display" style="color:#ef4444; font-family:monospace; font-size:11px; word-break:break-all;"></span>
+                    <button class="copy-btn" onclick="system.copyToClipboard('seed24-display')">🗐</button>
+                </div>
+
+                <hr style="margin:10px 0; border-top:1px dashed #334155;">
+                
+                <p style="margin:2px 0; font-size:11px;">Gemeinsamer Master Private-Key:</p>
+                <div class="copy-row">
+                    <span class="copy-text" id="privkey-display" style="color:#ef4444; font-family:monospace; font-size:11px; word-break:break-all;"></span>
+                    <button class="copy-btn" onclick="system.copyToClipboard('privkey-display')">🗐</button>
+                </div>
+            </div>
+
+            <button class="action-btn" onclick="system.logout()" style="background:#dc2626; margin-top:20px;">System verlassen (Logout)</button>
+        </div>
+
+        <!-- SIMULTANE BLOCKCHAIN KETTE (LOKALER LEDGER) -->
+        <div class="box">
+            <h3>Simultane Status- & Verifikationskette (Unveränderbar)</h3>
+            <div id="chain-output" class="chain-log">System bereit. Warte auf Interaktion...</div>
+        </div>
+
+        <!-- REINE EXPLORER-EBENE GANZ UNTEN -->
+        <div id="global-explorer" class="explorer-container">
+            <h3 class="explorer-title">🌐 Global Inter-Institutionell Explorer</h3>
+            <div class="explorer-inspect-box">
+                <div style="color:#38bdf8; font-weight:bold; margin-bottom:8px; text-transform:uppercase;">🔍 Vektor-Positions-Analyse (Inspektion)</div>
+                <div id="explorer-display-details">Klicke oben im unvollständigen oder vollständigen lokalen Ledger auf einen nackten Hash, um die hierarchische Übertragungs-Position einzusehen...</div>
+            </div>
+
+            <div class="explorer-inspect-box">
+                <div style="color:#38bdf8; font-weight:bold; margin-bottom:8px; text-transform:uppercase;">🔍 Vektor-Positions-Analyse (Inspektion)</div>
+                <div id="explorer-display-details">Klicke oben im unvollständigen oder vollständigen lokalen Ledger auf einen nackten Hash, um die hierarchische Übertragungs-Position einzusehen...</div>
+            </div>
+            <button class="action-btn" onclick="window.scrollTo({top:0, behavior:'smooth'})" style="background:#1f2937; color:#9ca3af; margin-top:12px; font-size:11px; padding:6px;">▲ Zurück zum Nutzer-Dashboard</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
